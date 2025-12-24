@@ -1,0 +1,19 @@
+{
+  "trusted": {
+    "bbc.co.uk": 3, "www.bbc.co.uk": 3, "bbc.com": 3, "www.bbc.com": 3,
+    "reuters.com": 3, "www.reuters.com": 3, "apnews.com": 3, "www.apnews.com": 3,
+    "cnn.com": 3, "edition.cnn.com": 3, "nytimes.com": 3, "www.nytimes.com": 3,
+    "theguardian.com": 3, "www.theguardian.com": 3, "euronews.com": 3, "www.euronews.com": 3,
+
+    "dw.com": 3, "www.dw.com": 3, "lemonde.fr": 3, "www.lemonde.fr": 3,
+    "spiegel.de": 3, "www.spiegel.de": 3, "ft.com": 3, "www.ft.com": 3,
+
+    "aa.com.tr": 3, "www.aa.com.tr": 3, "trthaber.com": 3, "www.trthaber.com": 3,
+    "hurriyet.com.tr": 2, "www.hurriyet.com.tr": 2, "milliyet.com.tr": 2, "www.milliyet.com.tr": 2,
+    "ntv.com.tr": 2, "www.ntv.com.tr": 2,
+
+    "nato.int": 3, "www.nato.int": 3, "un.org": 3, "www.un.org": 3,
+    "who.int": 3, "www.who.int": 3, "worldbank.org": 3, "www.worldbank.org": 3,
+    "imf.org": 3, "www.imf.org": 3
+  }
+}
