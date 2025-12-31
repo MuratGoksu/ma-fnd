@@ -128,19 +128,49 @@ class SourceTrackerAgent(BaseAgent):
             return ""
     
     def _get_credibility_score(self, domain: str) -> float:
-        """Kaynak güvenilirlik skoru (basit implementasyon)"""
+        """Kaynak güvenilirlik skoru - trust_sites.json kullanır"""
         if domain in self.source_credibility_db:
             return self.source_credibility_db[domain]
         
-        # Bilinen güvenilir kaynaklar (gerçek uygulamada veritabanından gelir)
+        # trust_sites.json'dan yükle
+        try:
+            import json
+            import os
+            config_path = os.path.join(os.path.dirname(__file__), "..", "config", "trust_sites.json")
+            if os.path.exists(config_path):
+                with open(config_path, "r", encoding="utf-8") as f:
+                    trust_config = json.load(f)
+                    trusted_sites = trust_config.get("trusted", {})
+                    
+                    # Tam eşleşme
+                    if domain in trusted_sites:
+                        score = trusted_sites[domain] / 3.0  # 0-3 arası skoru 0-1'e çevir
+                        self.source_credibility_db[domain] = score
+                        return score
+                    
+                    # Kısmi eşleşme (domain içinde)
+                    for trusted_domain, trust_level in trusted_sites.items():
+                        if trusted_domain in domain or domain in trusted_domain:
+                            score = trust_level / 3.0
+                            self.source_credibility_db[domain] = score
+                            return score
+        except Exception:
+            pass
+        
+        # Bilinen güvenilir kaynaklar (fallback)
         trusted_domains = {
-            "bbc.com": 0.95,
+            "bbc.com": 0.95, "bbc.co.uk": 0.95,
             "reuters.com": 0.95,
-            "ap.org": 0.95,
+            "ap.org": 0.95, "apnews.com": 0.95,
             "nasa.gov": 0.95,
             "nytimes.com": 0.90,
             "theguardian.com": 0.90,
             "washingtonpost.com": 0.90,
+            "hurriyet.com.tr": 0.75,  # Türk medyası için orta-yüksek güven
+            "milliyet.com.tr": 0.75,
+            "ntv.com.tr": 0.75,
+            "aa.com.tr": 0.85,
+            "trthaber.com": 0.80,
         }
         
         # Kısmi eşleşme kontrolü
@@ -149,8 +179,8 @@ class SourceTrackerAgent(BaseAgent):
                 self.source_credibility_db[domain] = score
                 return score
         
-        # Varsayılan skor
-        default_score = 0.5
+        # Varsayılan skor - bilinmeyen kaynaklar için daha yüksek (gerçek haberler için)
+        default_score = 0.65  # 0.5'ten 0.65'e çıkarıldı
         self.source_credibility_db[domain] = default_score
         return default_score
     

@@ -104,3 +104,5 @@ pip install tweepy
 - Kullanıcı adının doğru olduğundan emin ol
 - @ işareti olmadan kullanıcı adını gir
 
+
+

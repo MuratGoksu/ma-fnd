@@ -76,3 +76,5 @@ Eğer API çalışmazsa:
 - Port 8000'in boş olduğundan emin ol
 - `uvicorn` yüklü mü kontrol et
 
+
+

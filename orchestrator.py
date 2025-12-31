@@ -75,7 +75,8 @@ class Orchestrator:
             phase_times["data_collection"] = time.time() - phase_start
             self.metrics.record_phase_execution("data_collection", phase_times["data_collection"])
             
-            if preprocessed.get("status") in ["duplicate", "spam"]:
+            # Only block spam, not duplicates (allow re-analysis)
+            if preprocessed.get("status") == "spam":
                 processing_time = time.time() - start_time
                 self.metrics.record_pipeline_execution(
                     item_id, "UNSURE", processing_time, phase_times, True
@@ -83,8 +84,11 @@ class Orchestrator:
                 return {
                     "status": preprocessed.get("status"),
                     "item": item,
-                    "processing_time": processing_time
+                    "processing_time": processing_time,
+                    "verdict": "UNSURE",
+                    "confidence": 0.0
                 }
+            # Duplicate status is now ignored - allow re-analysis
             
             cleaned_item = preprocessed.get("cleaned_data", item)
             
@@ -180,8 +184,30 @@ class Orchestrator:
             
         except Exception as e:
             success = False
-            # Record error for all agents that might have been called
-            # This is a simplified error handling
+            # Record error for training system
+            try:
+                from agent_trainer import get_agent_trainer
+                trainer = get_agent_trainer()
+                # Try to identify which agent caused the error
+                error_agent = "UNKNOWN"
+                if "judge" in str(e).lower() or "JA" in str(e):
+                    error_agent = "JA"
+                elif "textual" in str(e).lower() or "TCA" in str(e):
+                    error_agent = "TCA"
+                elif "visual" in str(e).lower() or "VVA" in str(e):
+                    error_agent = "VVA"
+                elif "source" in str(e).lower() or "STA" in str(e):
+                    error_agent = "STA"
+                
+                trainer.record_error(
+                    agent_id=error_agent,
+                    error_type=type(e).__name__,
+                    error_message=str(e),
+                    context={"item_id": item_id, "phase": "pipeline"}
+                )
+            except Exception:
+                pass  # Don't fail if training system has issues
+            
             raise
         
         finally:

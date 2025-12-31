@@ -73,10 +73,24 @@ docker-compose up -d
 
 Or run manually:
 ```bash
-# Start PostgreSQL, Neo4j, Redis
+# Start PostgreSQL, Neo4j, Redis (optional)
 # Then run the API
 python api.py
 ```
+
+### Web Arayüzü
+
+API'yi başlattıktan sonra web tarayıcınızda şu adrese gidin:
+```
+http://localhost:8000
+```
+
+Web arayüzü özellikleri:
+- ✅ URL ile haber analizi
+- ✅ 7 kategori altında sahte haber skorlama (0-100)
+- ✅ En son kontrol edilen 5 haber
+- ✅ Bu hafta en çok kontrol edilen haberler
+- ✅ Gerçek haber tespitinde pozitif feedback
 
 ## Usage
 

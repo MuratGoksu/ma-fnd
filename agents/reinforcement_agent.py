@@ -28,7 +28,30 @@ class ReinforcementAgent(BaseAgent):
         action = data.get("action")
         reward = data.get("reward")
         
-        if action and reward is not None:
+        # Special handling for user feedback
+        if action == "process_feedback":
+            feedback = state.get("feedback", "")
+            item_id = state.get("item_id", "")
+            
+            # Calculate reward from feedback sentiment
+            reward = self._calculate_reward_from_feedback(feedback)
+            
+            # Create a state representation for this feedback
+            feedback_state = {
+                "item_id": item_id,
+                "feedback_type": "user_feedback"
+            }
+            
+            # Learn from feedback
+            learning_result = self.learn(feedback_state, "process_feedback", reward)
+            
+            result = {
+                "status": "feedback_processed",
+                "learning": learning_result,
+                "reward": reward,
+                "q_value": learning_result.get("q_value", 0.0)
+            }
+        elif action and reward is not None:
             # Öğrenme
             learning_result = self.learn(state, action, reward)
             
@@ -159,6 +182,43 @@ class ReinforcementAgent(BaseAgent):
     def get_policy(self) -> Dict[str, Dict[str, float]]:
         """Mevcut policy'yi döndür"""
         return self.q_table.copy()
+    
+    def _calculate_reward_from_feedback(self, feedback: str) -> float:
+        """Calculate reward from user feedback text using simple sentiment analysis"""
+        if not feedback:
+            return 0.0
+        
+        feedback_lower = feedback.lower()
+        reward = 0.0
+        
+        # Positive indicators (system was correct)
+        positive_words = [
+            "doğru", "haklı", "başarılı", "iyi", "güzel", "mükemmel",
+            "kesinlikle", "tam", "uygun", "uygun", "doğru tespit",
+            "correct", "right", "accurate", "good", "excellent"
+        ]
+        
+        # Negative indicators (system was wrong)
+        negative_words = [
+            "yanlış", "hatalı", "eksik", "yetersiz", "kötü", "başarısız",
+            "değil", "olmadı", "olamaz", "olmamalı", "yanlış tespit",
+            "wrong", "incorrect", "bad", "failed", "error", "mistake"
+        ]
+        
+        # Count positive and negative words
+        positive_count = sum(1 for word in positive_words if word in feedback_lower)
+        negative_count = sum(1 for word in negative_words if word in feedback_lower)
+        
+        # Calculate reward: positive feedback = +1.0, negative = -1.0, mixed = 0.0
+        if positive_count > negative_count:
+            reward = 0.8 + (positive_count * 0.1)  # 0.8 to 1.5
+        elif negative_count > positive_count:
+            reward = -0.8 - (negative_count * 0.1)  # -0.8 to -1.5
+        else:
+            reward = 0.0  # Neutral/mixed feedback
+        
+        # Clamp reward to reasonable range
+        return max(-1.5, min(1.5, reward))
     
     def _state_to_key(self, state: Dict[str, Any]) -> str:
         """State'i key'e çevir"""

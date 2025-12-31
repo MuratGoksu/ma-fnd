@@ -19,6 +19,8 @@ class PreprocessingAgent(BaseAgent):
         super().__init__("PP-A")
         self.textual_agent = TextualAgent()
         self.processed_items: List[str] = []  # Duplicate detection için
+        # Limit cache size to prevent memory issues
+        self.max_cache_size = 100
     
     def process(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """Ana işleme metodu"""
@@ -70,26 +72,28 @@ class PreprocessingAgent(BaseAgent):
             target_agents=["VVA", "TCA", "STA"]
         )
         
-        # Duplicate listesine ekle
-        self.processed_items.append(data.get("id", ""))
+        # Duplicate listesine ekle (limited cache)
+        item_id = data.get("id", "")
+        if item_id:
+            self.processed_items.append(item_id)
+            # Limit cache size
+            if len(self.processed_items) > self.max_cache_size:
+                self.processed_items = self.processed_items[-self.max_cache_size:]
         
         return result
     
     def _is_duplicate(self, item: Dict[str, Any]) -> bool:
-        """Duplicate detection"""
-        item_id = item.get("id", "")
-        headline = item.get("headline", "")
-        
-        # ID kontrolü
-        if item_id in self.processed_items:
-            return True
-        
-        # Headline benzerliği kontrolü (basit)
-        headline_hash = hash(headline.lower().strip())
-        if headline_hash in [hash(h.lower().strip()) for h in self.processed_items if isinstance(h, str)]:
-            return True
-        
+        """Duplicate detection - Very lenient to allow re-analysis"""
+        # DISABLED: Allow re-analysis of same URLs
+        # Users may want to re-analyze the same URL to see updated results
+        # or verify consistency
         return False
+        
+        # Old code (disabled):
+        # item_id = item.get("id", "")
+        # if item_id in self.processed_items[-10:]:
+        #     return True
+        # return False
     
     def _detect_language(self, item: Dict[str, Any]) -> str:
         """Dil tespiti (basit implementasyon)"""
@@ -130,6 +134,9 @@ class PreprocessingAgent(BaseAgent):
     
     def _normalize(self, item: Dict[str, Any], language: str) -> Dict[str, Any]:
         """Metin normalizasyonu"""
+        # Fact-check bilgisini koru (önemli!)
+        fact_check = item.get("fact_check")
+        
         # Unicode normalizasyonu
         if "text" in item:
             item["text"] = unicodedata.normalize("NFKC", item["text"])
@@ -144,6 +151,10 @@ class PreprocessingAgent(BaseAgent):
         
         # Dil bilgisini ekle
         item["detected_language"] = language
+        
+        # Fact-check bilgisini geri ekle
+        if fact_check:
+            item["fact_check"] = fact_check
         
         return item
     
