@@ -393,12 +393,8 @@ async def analyze_url(request: Dict[str, Any]):
         # Fetch content from URL
         news_item = url_crawler.fetch_news(url=url)
         
-        # Debug: log fact-check detection
-        fact_check = news_item.get("fact_check")
-        if fact_check:
-            logging.info(f"Fact-check detected: {fact_check}")
-        else:
-            logging.info(f"No fact-check detected for URL: {url}")
+            # Check for fact-check result
+            fact_check = news_item.get("fact_check")
         
         # If fact-check result exists, use it directly with high priority
         if fact_check and fact_check.get("is_fact_check"):
@@ -410,9 +406,6 @@ async def analyze_url(request: Dict[str, Any]):
             if verdict == "FAKE" or verdict == "REAL":
                 confidence = max(confidence, 0.90)  # Minimum 90% for fact-check results
             
-            # CRITICAL DEBUG LOG
-            logging.info(f"FACT-CHECK RESULT: verdict={verdict}, confidence={confidence}, rating={fact_check.get('rating')}")
-            logging.info(f"is_fake will be: {verdict == 'FAKE'}")
             
             # Still categorize if fake
             categorization = categorizer.categorize(
@@ -440,18 +433,9 @@ async def analyze_url(request: Dict[str, Any]):
             }
             result.update(categorization)
             
-            # CRITICAL: Don't override overall_score - it's already calculated from categories
-            # The categorizer now blends fact-check confidence with category scores
-            # Just log for debugging
-            logging.info(f"Fact-check result: verdict={verdict}, confidence={confidence}, "
-                        f"overall_score={result.get('overall_score')} (from categories)")
-            
-            # CRITICAL: Ensure is_fake is ALWAYS set correctly based on verdict
+            # Ensure is_fake is set correctly based on verdict
             result["is_fake"] = (verdict == "FAKE")
-            result["verdict"] = verdict  # Ensure verdict is not overwritten
-            
-            # FINAL DEBUG
-            logging.info(f"FINAL RESULT: verdict={result.get('verdict')}, is_fake={result.get('is_fake')}, confidence={result.get('confidence')}, overall_score={result.get('overall_score')}")
+            result["verdict"] = verdict
             
             # Save to storage
             storage.add_check(result)
@@ -576,7 +560,6 @@ async def submit_feedback(feedback_request: FeedbackRequest):
             
             # Process through Reinforcement Agent
             rl_result = orchestrator.rla.process(rl_data)
-            logging.info(f"Feedback processed by RL Agent: {rl_result}")
             
             # Also send to Optimizer Agent for weight adjustments
             optimizer_data = {
@@ -590,11 +573,9 @@ async def submit_feedback(feedback_request: FeedbackRequest):
                 }
             }
             optimizer_result = orchestrator.oa.process(optimizer_data)
-            logging.info(f"Feedback processed by Optimizer Agent: {optimizer_result}")
             
-            # Calculate reward from feedback for logging
+            # Calculate reward from feedback
             reward = orchestrator.rla._calculate_reward_from_feedback(feedback_request.feedback)
-            logging.info(f"Feedback reward calculated: {reward}")
             
             return {
                 "status": "success",

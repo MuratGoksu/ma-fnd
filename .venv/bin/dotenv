@@ -1,4 +1,4 @@
-#!/Users/muratgoksu/ma-fnd/.venv/bin/python3.11
+#!/Users/muratgoksu/Desktop/ma-fnd/.venv/bin/python3.14
 import sys
 from dotenv.__main__ import cli
 if __name__ == '__main__':

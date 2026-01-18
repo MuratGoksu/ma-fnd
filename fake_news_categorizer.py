@@ -76,10 +76,6 @@ class FakeNewsCategorizer:
         source_analysis = analyses.get("source_analysis", {})
         visual_analysis = analyses.get("visual_analysis", {})
         
-        # Log for debugging
-        import logging
-        logging.debug(f"Categorizing: headline_len={len(headline)}, text_len={len(text)}, "
-                     f"has_textual={bool(textual_analysis)}, has_source={bool(source_analysis)}")
         
         # Calculate scores for each category
         scores = {}

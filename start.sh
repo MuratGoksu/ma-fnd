@@ -17,3 +17,6 @@ echo "Web arayüzü: http://localhost:8000"
 echo ""
 .venv/bin/python api.py
 
+
+
+
