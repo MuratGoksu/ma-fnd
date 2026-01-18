@@ -393,8 +393,8 @@ async def analyze_url(request: Dict[str, Any]):
         # Fetch content from URL
         news_item = url_crawler.fetch_news(url=url)
         
-            # Check for fact-check result
-            fact_check = news_item.get("fact_check")
+        # Check for fact-check result
+        fact_check = news_item.get("fact_check")
         
         # If fact-check result exists, use it directly with high priority
         if fact_check and fact_check.get("is_fact_check"):
